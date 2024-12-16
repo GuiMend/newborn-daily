@@ -1,10 +1,8 @@
 from contextlib import asynccontextmanager
-from typing import Annotated
 
-from fastapi import Depends, FastAPI
+from fastapi import FastAPI
 
 from app.database import create_db_and_tables
-from app.oauth2 import oauth2_scheme
 from app.oauth2 import router as oauth2_router
 from app.users.router import router as users_router
 
@@ -18,13 +16,6 @@ async def lifespan(app):
 
 
 app = FastAPI(lifespan=lifespan)
-
-
-@app.get("/")
-def read_root(token: Annotated[str, Depends(oauth2_scheme)]):
-    print(token)
-    return {"Hello": "World"}
-
 
 app.include_router(oauth2_router)
 app.include_router(users_router)

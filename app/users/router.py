@@ -56,7 +56,7 @@ def create_user(user: UserCreate, session: SessionDep):
 
 
 @router.delete("/{user_email}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_user(user_email: EmailStr, session: SessionDep):
+def delete_user(user_email: EmailStr, session: SessionDep) -> None:
     user = session.get(User, user_email)
     if not user:
         raise HTTPException(

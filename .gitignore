@@ -6,6 +6,3 @@ __pycache__
 */.mypy_cache/
 */.tox/
 */.eggs/
-
-# Temp
-.talismanrc

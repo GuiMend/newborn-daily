@@ -1,5 +1,5 @@
 # This file contains the database configuration and session management
-from datetime import datetime, timezone
+from datetime import datetime
 import os
 from typing import Annotated
 from fastapi import Depends
