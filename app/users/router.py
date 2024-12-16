@@ -1,12 +1,19 @@
 from typing import Annotated, List
-from fastapi import APIRouter, HTTPException, Query, status
+
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import EmailStr
 from sqlmodel import select
 
-from app.users.models import User, UserCreate, UserResponse
 from app.database import SessionDep
+from app.oauth2 import get_current_user, get_password_hash
+from app.users.models import User, UserCreate, UserResponse
 
 router = APIRouter(prefix="/users", tags=["Users"])
+
+
+@router.get("/me", response_model=UserResponse)
+def read_user_me(user: Annotated[User, Depends(get_current_user)]):
+    return user
 
 
 @router.get("/", response_model=List[UserResponse])
@@ -38,6 +45,9 @@ def create_user(user: UserCreate, session: SessionDep):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered"
         )
+
+    # Hash the password before storing it in the database
+    valid_user.password = get_password_hash(valid_user.password)
 
     session.add(valid_user)
     session.commit()

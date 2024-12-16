@@ -12,7 +12,7 @@ class UserBase(SQLModel):
 
 
 class User(UserBase, TimestampModel, table=True):
-    password: str = Field(max_length=100)
+    password: str = Field(max_length=255)
 
 
 class UserResponse(UserBase):
