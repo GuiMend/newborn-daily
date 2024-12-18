@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from app.database import create_db_and_tables
 from app.oauth2 import router as oauth2_router
 from app.users.router import router as users_router
-
+from .config import settings
 
 @asynccontextmanager
 async def lifespan(app):
