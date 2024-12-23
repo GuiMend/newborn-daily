@@ -8,6 +8,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jwt.exceptions import InvalidTokenError
 from passlib.context import CryptContext
 from pydantic import BaseModel, EmailStr
+from sqlmodel import select
 
 from app.database import SessionDep
 from app.users.models import User
@@ -29,7 +30,7 @@ class Token(BaseModel):
 
 
 class TokenData(BaseModel):
-    email: EmailStr | None = None
+    id: str | None = None
 
 
 @router.post(f"/{LOGIN_URL}", response_model=Token)
@@ -39,15 +40,17 @@ def login(
     user = authenticate_user(
         email=form_data.username, password=form_data.password, session=session
     )
+
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": user.email},
+        data={"sub": f"{user.id}"},  # subject must be a string
         expires_delta=access_token_expires,
     )
     return Token(access_token=access_token, token_type="bearer")
@@ -62,7 +65,8 @@ def get_password_hash(password: str):
 
 
 def authenticate_user(email: EmailStr, password: str, session: SessionDep):
-    user = session.get(User, email)
+    user = session.exec(select(User).where(User.email == email)).first()
+
     if not user:
         return False
     if not verify_password(password, user.password):
@@ -81,6 +85,18 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     return encoded_jwt
 
 
+def verify_access_token(token: str, credentials_exception: HTTPException):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        # "sub" is the JWT subject (unique identifier of the user - ID in this case)
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            raise credentials_exception
+        return TokenData(id=user_id)
+    except InvalidTokenError:
+        raise credentials_exception
+
+
 async def get_current_user(
     token: Annotated[str, Depends(oauth2_scheme)], session: SessionDep
 ):
@@ -89,18 +105,14 @@ async def get_current_user(
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        # "sub" is the JWT subject (unique identifier of the user - email in this case)
-        email: EmailStr = payload.get("sub")
-        if email is None:
-            raise credentials_exception
-        token_data = TokenData(email=email)
-    except InvalidTokenError:
-        raise credentials_exception
 
-    user = session.get(User, token_data.email)
+    token_data = verify_access_token(token, credentials_exception)
+    user = session.get(User, token_data.id)
+
     if user is None:
         raise credentials_exception
 
     return user
+
+
+CurrentUserDep = Annotated[User, Depends(get_current_user)]

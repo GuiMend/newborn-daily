@@ -28,22 +28,18 @@ repos:
     hooks:
       - id: python-safety-dependencies-check
 
-  # TODO: FIXME: Bandit for security checks
-  # - repo: https://github.com/PyCQA/bandit
-  #   rev: 1.8.0
-  #   hooks:
-  #     - id: bandit
-  #       args:
-  #         [
-  #           "--recursive",
-  #           ".",
-  #           "--severity-level",
-  #           "high",
-  #           "--confidence-level",
-  #           "high",
-  #         ]
-  #       exclude: "./tests|./.venv/" # Exclude test files and "vevn" from security checks
-  #       types: [python] # Only run on Python files
+  # Bandit for security checks
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.8.0
+    hooks:
+      - id: bandit
+        args: [
+            "-lll", # Report only high severity issues
+            "-ii", # Report only medium/high confidence issues
+            "-r", # Recursively check all files
+          ]
+        # exclude: "./tests|./.venv/" # Exclude test files and "vevn" from security checks
+        types: [python] # Only run on Python files
 
   # TODO: FIXME: MyPy for static type checking
   # - repo: https://github.com/pre-commit/mirrors-mypy

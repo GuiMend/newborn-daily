@@ -3,6 +3,9 @@ install:
 	@pip install -r requirements.txt
 	@echo "===> Done."
 
+start:
+	make run
+
 run:
 	@echo "===> Running..."
 	@fastapi dev app/main.py
