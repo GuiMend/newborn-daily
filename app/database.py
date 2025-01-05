@@ -1,16 +1,16 @@
 # This file contains the database configuration and session management
-from datetime import datetime
-import os
+from datetime import datetime, timezone
 from typing import Annotated
 from fastapi import Depends
-from sqlalchemy import DateTime, func
-from sqlmodel import Field, SQLModel, create_engine, Session, Column
+from sqlmodel import Field, SQLModel, create_engine, Session
 
-DB_USERNAME = os.getenv("DB_USERNAME")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
-DB_HOSTNAME = os.getenv("DB_HOSTNAME")
-DB_PORT = os.getenv("DB_PORT")
-DB_NAME = os.getenv("DB_NAME")
+from app.config import settings
+
+DB_USERNAME = settings.db_username
+DB_PASSWORD = settings.db_password
+DB_HOSTNAME = settings.db_hostname
+DB_PORT = settings.db_port
+DB_NAME = settings.db_name
 
 DATABASE_URL = (
     f"postgresql://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOSTNAME}:{DB_PORT}/{DB_NAME}"
@@ -31,21 +31,27 @@ def get_session():
 SessionDep = Annotated[Session, Depends(get_session)]
 
 
-class TimestampModel(SQLModel):
-    created_at: datetime | None = Field(
-        default=None,
-        sa_column=Column(
-            DateTime,
-            nullable=False,
-            server_default=func.now(),
-        ),
-    )
-    updated_at: datetime | None = Field(
-        default=None,
-        sa_column=Column(
-            DateTime,
-            nullable=False,
-            server_default=func.now(),
-            onupdate=func.now(),
-        ),
-    )
+class TimestampMixin:
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    # created_at: datetime | None = Field(
+    #     default=None,
+    #     sa_column=Column(
+    #         DateTime,
+    #         nullable=False,
+    #         server_default=func.now(),
+    #     ),
+    # )
+    # updated_at: datetime | None = Field(
+    #     default=None,
+    #     sa_column=Column(
+    #         DateTime,
+    #         nullable=False,
+    #         server_default=func.now(),
+    #         onupdate=func.now(),
+    #     ),
+    # )
+
+
+def update_timestamp(mapper, connection, target):
+    target.updated_at = datetime.now(timezone.utc)

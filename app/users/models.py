@@ -1,8 +1,9 @@
 import uuid
+
 from pydantic import EmailStr
 from sqlmodel import Field, SQLModel
-
-from app.database import TimestampModel
+from sqlalchemy import event
+from app.database import TimestampMixin, update_timestamp
 
 
 class UserBase(SQLModel):
@@ -12,7 +13,7 @@ class UserBase(SQLModel):
     last_name: str | None = Field(default=None, max_length=50)
 
 
-class User(UserBase, TimestampModel, table=True):
+class User(UserBase, TimestampMixin, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     password: str = Field(max_length=255)
 
@@ -23,3 +24,6 @@ class UserResponse(UserBase):
 
 class UserCreate(UserBase):
     password: str
+
+
+event.listen(User, "before_update", update_timestamp)

@@ -1,4 +1,3 @@
-import os
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
@@ -10,12 +9,13 @@ from passlib.context import CryptContext
 from pydantic import BaseModel, EmailStr
 from sqlmodel import select
 
+from app.config import settings
 from app.database import SessionDep
 from app.users.models import User
 
-SECRET_KEY = os.getenv("HASH_SECRET_KEY")
-ALGORITHM = os.getenv("HASH_ALGORITHM")
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 120))
+SECRET_KEY = settings.hash_secret_key
+ALGORITHM = settings.hash_algorithm
+ACCESS_TOKEN_EXPIRE_MINUTES = settings.access_token_expire_minutes
 
 LOGIN_URL = "login"
 
