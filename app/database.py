@@ -2,7 +2,7 @@
 from datetime import datetime, timezone
 from typing import Annotated
 from fastapi import Depends
-from sqlmodel import Field, SQLModel, create_engine, Session
+from sqlmodel import Field, create_engine, Session
 
 from app.config import settings
 
@@ -20,7 +20,9 @@ engine = create_engine(DATABASE_URL, echo=True)
 
 
 def create_db_and_tables():
-    SQLModel.metadata.create_all(engine)
+    # Perhaps not needed with Alembic (?)
+    # SQLModel.metadata.create_all(engine)
+    pass
 
 
 def get_session():
